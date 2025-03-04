@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediVault - Your Medical Records Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(120deg, #3B82F6, #2563EB);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <nav class="gradient-bg text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">MediVault</h1>
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="hover:text-blue-200" id="dashboardLink">Dashboard</a>
+                <a href="#" class="hover:text-blue-200" id="recordsLink">My Records</a>
+                <a href="#" class="hover:text-blue-200" id="doctorsLink">Doctors</a>
+                <a href="#" class="hover:text-blue-200" id="profileLink">Profile</a>
+            </div>
+            <button class="md:hidden" id="menuBtn">
+                <i class="bi bi-list text-2xl"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="hidden md:hidden bg-blue-600 text-white p-4">
+        <div class="flex flex-col space-y-4">
+            <a href="#" class="hover:text-blue-200">Dashboard</a>
+            <a href="#" class="hover:text-blue-200">My Records</a>
+            <a href="#" class="hover:text-blue-200">Doctors</a>
+            <a href="#" class="hover:text-blue-200">Profile</a>
+        </div>
+    </div>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="space-y-6">
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <i class="bi bi-file-earmark-medical text-3xl text-blue-600"></i>
+                    <h3 class="text-xl font-semibold mt-4">Medical Records</h3>
+                    <p class="text-gray-600 mt-2">Total: <span id="recordCount">0</span></p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <i class="bi bi-people text-3xl text-blue-600"></i>
+                    <h3 class="text-xl font-semibold mt-4">Shared With</h3>
+                    <p class="text-gray-600 mt-2">Doctors: <span id="doctorCount">0</span></p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <i class="bi bi-bell text-3xl text-blue-600"></i>
+                    <h3 class="text-xl font-semibold mt-4">Notifications</h3>
+                    <p class="text-gray-600 mt-2">New: <span id="notificationCount">0</span></p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold">Recent Records</h2>
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" id="addRecordBtn">
+                        Add New Record
+                    </button>
+                </div>
+                <div id="recordsList" class="space-y-4">
+                    <!-- Records will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Record Modal -->
+        <div id="addRecordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white p-6 rounded-lg w-full max-w-md">
+                <h3 class="text-xl font-semibold mb-4">Add New Medical Record</h3>
+                <form id="recordForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Record Type</label>
+                        <select class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                            <option value="">Select type</option>
+                            <option value="prescription">Prescription</option>
+                            <option value="labReport">Lab Report</option>
+                            <option value="scan">Scan/X-Ray</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Date</label>
+                        <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" rows="3" required></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Upload File</label>
+                        <input type="file" class="mt-1 block w-full" accept=".pdf,.jpg,.png,.doc,.docx" required>
+                    </div>
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50" id="cancelAddRecord">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Record</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize user ID
+        let userId = localStorage.getItem('userId') || Math.random().toString(36).substring(7);
+        localStorage.setItem('userId', userId);
+
+        // UI Elements
+        const menuBtn = document.getElementById('menuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const addRecordBtn = document.getElementById('addRecordBtn');
+        const addRecordModal = document.getElementById('addRecordModal');
+        const cancelAddRecord = document.getElementById('cancelAddRecord');
+        const recordForm = document.getElementById('recordForm');
+        const recordsList = document.getElementById('recordsList');
+
+        // Toggle mobile menu
+        menuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Modal controls
+        addRecordBtn.addEventListener('click', () => {
+            addRecordModal.classList.remove('hidden');
+        });
+
+        cancelAddRecord.addEventListener('click', () => {
+            addRecordModal.classList.add('hidden');
+        });
+
+        // Handle form submission
+        recordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(recordForm);
+            try {
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/db', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer YvQjhxAiNROHVKMHUjs2XlsmNug1',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        appSlug: 'medivault',
+                        action: 'create',
+                        table: 'medical_records',
+                        data: {
+                            type: formData.get('type'),
+                            date: formData.get('date'),
+                            description: formData.get('description'),
+                            fileUrl: 'placeholder-url' // In production, first upload file to storage
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    addRecordModal.classList.add('hidden');
+                    recordForm.reset();
+                    loadRecords();
+                }
+            } catch (error) {
+                console.error('Error saving record:', error);
+            }
+        });
+
+        // Load records
+        async function loadRecords() {
+            try {
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/db', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer YvQjhxAiNROHVKMHUjs2XlsmNug1',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        appSlug: 'medivault',
+                        action: 'read',
+                        table: 'medical_records'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateRecordsList(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading records:', error);
+            }
+        }
+
+        function updateRecordsList(records) {
+            recordsList.innerHTML = '';
+            document.getElementById('recordCount').textContent = records.length;
+
+            records.forEach(record => {
+                const recordElement = document.createElement('div');
+                recordElement.className = 'flex items-center justify-between p-4 border rounded-lg';
+                recordElement.innerHTML = `
+                    <div>
+                        <h4 class="font-semibold">${record.data.type}</h4>
+                        <p class="text-sm text-gray-600">${record.data.date}</p>
+                        <p class="text-sm">${record.data.description}</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="text-blue-600 hover:text-blue-800">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="text-blue-600 hover:text-blue-800">
+                            <i class="bi bi-share"></i>
+                        </button>
+                    </div>
+                `;
+                recordsList.appendChild(recordElement);
+            });
+        }
+
+        // Initial load
+        loadRecords();
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
